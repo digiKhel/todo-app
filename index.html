@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #e8f4f8;
+        color: #292524;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 80px 16px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 440px;
+      }
+
+      header {
+        margin-bottom: 32px;
+      }
+
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        color: #1c1917;
+      }
+
+      .subtitle {
+        margin-top: 4px;
+        font-size: 13px;
+        color: #a8a29e;
+        min-height: 20px;
+      }
+
+      .input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+
+      #task-input {
+        flex: 1;
+        padding: 10px 16px;
+        border: 1px solid #e7e5e4;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 14px;
+        color: #1c1917;
+        outline: none;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+
+      #task-input::placeholder {
+        color: #d6d3d1;
+      }
+
+      #task-input:focus {
+        border-color: #a8a29e;
+        box-shadow: 0 0 0 3px rgba(168, 162, 158, 0.2);
+      }
+
+      #add-btn {
+        padding: 10px 18px;
+        background: #1c1917;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s;
+        white-space: nowrap;
+      }
+
+      #add-btn:hover {
+        background: #44403c;
+      }
+
+      #add-btn:active {
+        background: #0c0a09;
+      }
+
+      #todo-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .todo-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        border: 1px solid #f5f5f4;
+        border-radius: 8px;
+        padding: 12px 16px;
+        transition: border-color 0.15s;
+      }
+
+      .todo-item:hover {
+        border-color: #e7e5e4;
+      }
+
+      .todo-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #44403c;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+
+      .todo-text {
+        flex: 1;
+        font-size: 14px;
+        color: #44403c;
+        transition: color 0.15s;
+      }
+
+      .todo-item.done .todo-text {
+        text-decoration: line-through;
+        color: #d6d3d1;
+      }
+
+      .remove-btn {
+        background: none;
+        border: none;
+        color: #d6d3d1;
+        font-size: 20px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 2px;
+        opacity: 0;
+        transition:
+          color 0.15s,
+          opacity 0.15s;
+      }
+
+      .todo-item:hover .remove-btn {
+        opacity: 1;
+      }
+
+      .remove-btn:hover {
+        color: #78716c;
+      }
+
+      .empty {
+        text-align: center;
+        padding: 64px 0;
+        font-size: 14px;
+        color: #d6d3d1;
+        user-select: none;
+      }
+
+      .clear-btn {
+        display: block;
+        margin-top: 16px;
+        background: none;
+        border: none;
+        font-size: 12px;
+        color: #d6d3d1;
+        cursor: pointer;
+        transition: color 0.15s;
+        padding: 0;
+      }
+
+      .clear-btn:hover {
+        color: #78716c;
+      }
+
+      #nudge {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #faeeda;
+        color: #633806;
+        border-radius: 8px;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 13px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        z-index: 999;
+      }
+
+      #nudge button {
+        background: #ba7517;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      #streak-display {
+        font-size: 12px;
+        color: #3c3489;
+        background: #eeedfe;
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 20px;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>JJ's Tasks</h1>
+        <p id="streak-display"></p>
+        <p class="subtitle" id="subtitle"></p>
+      </header>
+
+      <div class="input-row">
+        <input
+          type="text"
+          id="task-input"
+          placeholder="Add a task..."
+          autocomplete="off"
+        />
+        <button id="add-btn">Add</button>
+      </div>
+
+      <ul id="todo-list"></ul>
+      <button class="clear-btn" id="clear-btn" style="display: none">
+        Clear completed
+      </button>
+    </div>
+
+    <script>
+      const input = document.getElementById("task-input");
+      const addBtn = document.getElementById("add-btn");
+      const list = document.getElementById("todo-list");
+      const subtitle = document.getElementById("subtitle");
+      const clearBtn = document.getElementById("clear-btn");
+
+      let todos = JSON.parse(localStorage.getItem("todos") || "[]");
+      let nextId = 1;
+
+      let nudgeTimer = null;
+      const NUDGE_AFTER_MS = 5 * 60 * 1000;
+
+      let streak = parseInt(localStorage.getItem("streak") || "0");
+      let lastCompletedDate = localStorage.getItem("lastCompletedDate") || "";
+
+      function resetNudgeTimer() {
+        clearTimeout(nudgeTimer);
+        nudgeTimer = setTimeout(() => {
+          showNudge();
+        }, NUDGE_AFTER_MS);
+      }
+
+      function showNudge() {
+        const existing = document.getElementById("nudge");
+        if (existing) return;
+
+        const nudge = document.createElement("div");
+        nudge.id = "nudge";
+        nudge.innerHTML = `
+          <span>You've been idle. Pick a task and do just 5 minutes of it.</span>
+          <button onclick="dismissNudge()">I'm on it</button>
+        `;
+        document.body.appendChild(nudge);
+      }
+
+      function dismissNudge() {
+        const nudge = document.getElementById("nudge");
+        if (nudge) nudge.remove();
+        resetNudgeTimer();
+      }
+
+      function updateStreak() {
+        const today = new Date().toISOString().slice(0, 10);
+        if (lastCompletedDate === today) return;
+
+        const yesterday = new Date(Date.now() - 86400000)
+          .toISOString()
+          .slice(0, 10);
+        streak = lastCompletedDate === yesterday ? streak + 1 : 1;
+        lastCompletedDate = today;
+
+        localStorage.setItem("streak", streak);
+        localStorage.setItem("lastCompletedDate", lastCompletedDate);
+      }
+
+      function render() {
+        localStorage.setItem("todos", JSON.stringify(todos));
+        const total = todos.length;
+        const remaining = todos.filter((t) => !t.done).length;
+        const anyDone = todos.some((t) => t.done);
+
+        if (total === 0) {
+          subtitle.textContent = "";
+        } else if (remaining === 0) {
+          subtitle.textContent = "All done!";
+        } else {
+          subtitle.textContent = `${remaining} of ${total} remaining`;
+        }
+
+        clearBtn.style.display = anyDone ? "block" : "none";
+
+        list.innerHTML = "";
+
+        if (total === 0) {
+          const empty = document.createElement("li");
+          empty.className = "empty";
+          empty.textContent = "No tasks yet. Add one above.";
+          list.appendChild(empty);
+          return;
+        }
+
+        todos.forEach((todo) => {
+          const li = document.createElement("li");
+          li.className = "todo-item" + (todo.done ? " done" : "");
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = todo.done;
+          checkbox.addEventListener("change", () => toggle(todo.id));
+
+          const span = document.createElement("span");
+          span.className = "todo-text";
+          span.textContent = todo.text;
+
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "remove-btn";
+          removeBtn.textContent = "×";
+          removeBtn.setAttribute("aria-label", "Remove task");
+          removeBtn.addEventListener("click", () => remove(todo.id));
+
+          li.appendChild(checkbox);
+          li.appendChild(span);
+          li.appendChild(removeBtn);
+          list.appendChild(li);
+        });
+
+        const streakEl = document.getElementById("streak-display");
+        if (streak >= 2) {
+          streakEl.textContent = "🔥 " + streak + "-day streak";
+          streakEl.style.display = "block";
+        } else {
+          streakEl.style.display = "none";
+        }
+      }
+
+      function addTodo() {
+        const text = input.value.trim();
+        if (!text) return;
+        todos.push({ id: nextId++, text, done: false });
+        input.value = "";
+        input.focus();
+        resetNudgeTimer();
+
+        render();
+      }
+
+      function toggle(id) {
+        const todo = todos.find((t) => t.id === id);
+        if (todo) {
+          todo.done = !todo.done;
+          if (todo.done) updateStreak();
+
+          resetNudgeTimer();
+
+          render();
+        }
+      }
+
+      function remove(id) {
+        todos = todos.filter((t) => t.id !== id);
+        render();
+      }
+
+      addBtn.addEventListener("click", addTodo);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") addTodo();
+      });
+      clearBtn.addEventListener("click", () => {
+        todos = todos.filter((t) => !t.done);
+        render();
+      });
+
+      input.focus();
+      render();
+      resetNudgeTimer();
+    </script>
+  </body>
+</html>
